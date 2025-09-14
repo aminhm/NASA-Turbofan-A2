@@ -11,13 +11,12 @@ column_names = ['unit_number', 'time_in_cycles', 'op_setting_1', 'op_setting_2',
 def build_X(df, drop_constant=False):
     
     feature_cols = ['op_setting_1','op_setting_2','op_setting_3'] + [f'sensor_measurement_{i}' for i in range(1, 22)]
-    df_used = df.sort_values('time_in_cycles').groupby('unit_number').tail(1)
 
     if drop_constant:
-        feature_cols = [c for c in feature_cols if df_used[c].nunique() > 1]
+        feature_cols = [c for c in feature_cols if df[c].nunique() > 1]
 
-    X = df_used[feature_cols].to_numpy()
-    return X, feature_cols, df_used
+    X = df[feature_cols].to_numpy()
+    return X, feature_cols
 
 # --- Keep your exploratory code guarded to avoid side-effects on import ---
 if __name__ == "__main__":
