@@ -9,13 +9,27 @@ import seaborn as sns
 column_names = ['unit_number', 'time_in_cycles', 'op_setting_1', 'op_setting_2', 'op_setting_3'] + [f'sens_meas_{i}' for i in range(1, 22)]  # total 26 columns
 
 def build_X(df, drop_constant=False, drop_op_setting=False):
+    """
+    Build the feature matrix X from the dataframe by selecting relevant columns.
+    
+    Parameters:
+    df (pd.DataFrame): Input dataframe containing the data.
+    drop_constant (bool): If True, drop columns with constant values.
+    drop_op_setting (bool): If True, drop operational setting columns.
+    
+    Returns:
+    X (np.ndarray): Feature matrix.
+    feature_cols (list): List of feature column names used.
+    """
 
     feature_cols = ['op_setting_1','op_setting_2','op_setting_3'] + [f'sens_meas_{i}' for i in range(1, 22)]
 
     if drop_constant:
+        # Drop columns with number of unique values = 1
         feature_cols = [c for c in feature_cols if df[c].nunique() > 1]
     
     if drop_op_setting:
+        # Drop operational setting columns
         feature_cols = [c for c in feature_cols if 'op_setting' not in c]
 
     X = df[feature_cols].to_numpy()
