@@ -13,12 +13,7 @@ train_df2 = pd.read_csv('data/train_FD002.txt', sep=r'\s+', header=None, names=c
 train_df3 = pd.read_csv('data/train_FD003.txt', sep=r'\s+', header=None, names=column_names)
 train_df4 = pd.read_csv('data/train_FD004.txt', sep=r'\s+', header=None, names=column_names)
 
-# Print unique values in 'unit_number' column for each dataset
-
-print("Unique unit numbers in train_FD002:", train_df2['unit_number'].nunique())
-print("Unique unit numbers in train_FD003:", train_df3['unit_number'].nunique())
-print("Unique unit numbers in train_FD004:", train_df4['unit_number'].nunique())
-
+# Percentages for splitting the data
 c_perc = 0.6  # 60% for calibration
 v_perc = 0.2  # 20% for validation
 t_perc = 0.2  # 20% for testing
@@ -78,3 +73,11 @@ for i, split in enumerate(splits, start=1):
     print(f"  Validation units: {split['validation']['unit_number'].nunique()}")
     print(f"  Testing units: {split['testing']['unit_number'].nunique()}")
     
+## CALIBRATION / TRAINING PHASE
+# ...
+
+## VALIDATION PHASE
+# ...
+
+## TESTING PHASE
+# ...
