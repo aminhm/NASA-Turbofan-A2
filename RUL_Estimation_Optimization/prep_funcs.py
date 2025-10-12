@@ -39,7 +39,7 @@ def build_X(df, drop_constant=False, drop_op_setting=False):
     feature_cols (list): List of feature column names used.
     """
 
-    feature_cols = ['unit_number','op_setting_1','op_setting_2','op_setting_3'] + [f'sens_meas_{i}' for i in range(1, 22)]
+    feature_cols = ['op_setting_1','op_setting_2','op_setting_3'] + [f'sens_meas_{i}' for i in range(1, 22)]
 
     if drop_constant:
         # Drop columns with number of unique values = 1

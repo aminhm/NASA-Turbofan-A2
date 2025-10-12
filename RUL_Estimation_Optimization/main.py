@@ -1,6 +1,5 @@
 import calibration_funcs as cf
 import validation_funcs as vf
-import testing_funcs as tf
 import prep_funcs as pf
 
 import pandas as pd
@@ -15,16 +14,11 @@ train_df2 = pd.read_csv('data/train_FD002.txt', sep=r'\s+', header=None, names=c
 train_df3 = pd.read_csv('data/train_FD003.txt', sep=r'\s+', header=None, names=column_names)
 train_df4 = pd.read_csv('data/train_FD004.txt', sep=r'\s+', header=None, names=column_names)
 
-
-
-## PRE-PROCESSING PHASE
-
-# For each dataset, select random units for calibration, validation, and testing
-# Percentages for splitting the data
 c_perc = 0.6  # 60% for calibration
 v_perc = 0.2  # 20% for validation
 t_perc = 0.2  # 20% for testing
 
+## PRE-PROCESSING PHASE
 train_dfs = [train_df1, train_df2, train_df3, train_df4]
 cal_X, val_X, test_X, cal_y, val_y, test_y = pf.split_dataframes(train_dfs, c_perc, v_perc, t_perc)
 
@@ -55,22 +49,47 @@ print("\n\nBuild completed successfully.\n\n")
 
 
 ## CALIBRATION / TRAINING PHASE
-PRESS_med, Q2_med, best_press, best_q2 = cf.expanding_window_cv(cal_X, cal_y['RUL'], max_components=10, show=False)
+PRESS_med, Q2_med, best_press, best_q2 = cf.expanding_window_cv(cal_X, cal_y['RUL'], max_components=10, n_folds=10, show=True)
 best_n = best_q2
-print(f"Optimal number of components based on Q2: {best_n}")
+print(f"Optimal number of components based on Q^2: {best_n}")
 
 model = cf.calibrate_pls(cal_X, cal_y['RUL'], n_components=best_n)
-selected_sensors, vip_scores = cf.select_sensors(model, cal_X, threshold=1, show=False)
+
+selected_sensors, vip_scores = cf.select_sensors(model, cal_X, threshold=1, show=True)
 print(f"Selected sensors ({len(selected_sensors)}): {selected_sensors}")
 
 cal_X_reduced = cal_X[selected_sensors]
-pls_model_reduced = cf.calibrate_pls(cal_X_reduced, cal_y['RUL'], n_components=best_n)
+val_X_reduced = val_X[selected_sensors]
+test_X_reduced = test_X[selected_sensors]
+
+# Standardizza usando solo la calibrazione
+cal_X_reduced, cal_mean, cal_std = pf.standardize_data(cal_X_reduced)
+val_X_reduced, _, _ = pf.standardize_data(val_X_reduced, mean=cal_mean, std=cal_std)
+test_X_reduced, _, _ = pf.standardize_data(test_X_reduced, mean=cal_mean, std=cal_std)
 
 
 
 ## VALIDATION PHASE
-# ...
-    
+pls_model_reduced = vf.evaluate_vip_subset(
+    cal_X_reduced, cal_y['RUL'],
+    val_X_reduced, val_y['RUL'],
+    selected_sensors, Kfold=10, maxLV=9, show=True
+)
+
+val_pred = pls_model_reduced.predict(val_X_reduced.to_numpy()).ravel()
+vf.plot_predictions(val_y['RUL'].to_numpy().ravel(), val_pred, title="Validation Results")
+
+
 
 ## TESTING PHASE
-# ...
+test_pred = pls_model_reduced.predict(test_X_reduced.to_numpy()).ravel()
+test_y_true = test_y['RUL'].to_numpy().ravel()
+test_rmse = np.sqrt(np.mean((test_y_true - test_pred)**2))
+test_press = np.sum((test_y_true - test_pred)**2)
+test_q2 = 1 - test_press / max(np.sum((test_y_true - np.mean(cal_y['RUL']))**2), np.finfo(float).eps)
+
+print(f"\nTest PRESS: {test_press:.3f}")
+print(f"Test RMSE:  {test_rmse:.3f}")
+print(f"Test Q²:    {test_q2:.3f}\n\n")
+
+vf.plot_predictions(test_y_true, test_pred, title="Testing Results")
