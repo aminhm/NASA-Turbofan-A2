@@ -9,7 +9,7 @@ def expanding_window_cv(X, y, max_components=10, n_folds=10, show=False):
     Perform expanding window cross-validation to evaluate PLS regression models with varying number of components.
     
     Parameters:
-    X (pd.DataFrame): Feature matrix.
+    X (pd.DataFrame): Calibration matrix.
     y (pd.DataFrame): Target RUL values.
     max_components (int): Maximum number of PLS components to evaluate.
     n_folds (int): Number of folds for cross-validation.
@@ -39,14 +39,14 @@ def expanding_window_cv(X, y, max_components=10, n_folds=10, show=False):
             Xc, yc = X.iloc[cal_idx], y.iloc[cal_idx]
             Xv, yv = X.iloc[val_idx], y.iloc[val_idx]
 
-            # Standardizza solo sui dati di calibrazione
+            # Standardize within the calibration window
             mu = Xc.mean(axis=0)
             std = Xc.std(axis=0).replace(0, 0.001)
             XcZ = (Xc - mu) / std
             XvZ = (Xv - mu) / std
 
-            pls = PLSRegression(n_components=min([a, np.linalg.matrix_rank(XcZ), XcZ.shape[1]]))
-            pls.fit(XcZ, yc)
+            a = min([a, np.linalg.matrix_rank(XcZ), XcZ.shape[1]])
+            pls = calibrate_pls(XcZ, yc, n_components=a)
             yhat_v = pls.predict(XvZ).ravel()
 
             press_f = np.sum((yv - yhat_v) ** 2)
