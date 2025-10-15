@@ -124,5 +124,3 @@ def plot_predictions(y_true, y_pred, title="Predictions"):
     plt.title(title)
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{title}.png")
-    plt.show()
